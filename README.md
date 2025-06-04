@@ -19,13 +19,21 @@ or saving widget states.
 - 📱 Support for high DPI screens with pixel ratio control
 - 🧩 Merge multiple images into one composition
 
-## Android Example
-<img src="media_doc/list_scroll_android.gif" width="200">
-<img src="media_doc/single_widget_android.gif" width="200">
+## Android
+<div style="display: flex; flex-wrap: wrap; gap: 20px;">
+  <div>
+    <img src="media_doc/list_scroll_android.gif" width="250">
+    <img src="media_doc/single_widget_android.gif" width="250">
+  </div>
+</div>
 
-## IOS Example
-<img src="media_doc/list_scroll_ios.gif" width="200"> 
-<img src="media_doc/single_widget_ios.gif" width="200">
+## IOS
+<div style="display: flex; flex-wrap: wrap; gap: 20px;">
+  <div>
+    <img src="media_doc/list_scroll_ios.gif" width="250">
+    <img src="media_doc/single_widget_ios.gif" width="250">
+  </div>
+</div>
 
 ## Installation
 
