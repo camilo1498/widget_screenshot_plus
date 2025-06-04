@@ -22,16 +22,16 @@ or saving widget states.
 ## Android
 <div style="display: flex; flex-wrap: wrap; gap: 20px;">
   <div>
-    <img src="media_doc/list_scroll_android.gif" width="250">
-    <img src="media_doc/single_widget_android.gif" width="250">
+    <img src="https://github.com/camilo1498/widget_screenshot_plus/blob/master/media_doc/list_scroll_android.gif?raw=true" width="250" alt="list_scroll_android">
+    <img src="https://github.com/camilo1498/widget_screenshot_plus/blob/master/media_doc/single_widget_android.gif?raw=true" width="250" alt="single_widget_android">
   </div>
 </div>
 
 ## IOS
 <div style="display: flex; flex-wrap: wrap; gap: 20px;">
   <div>
-    <img src="media_doc/list_scroll_ios.gif" width="250">
-    <img src="media_doc/single_widget_ios.gif" width="250">
+    <img src="https://github.com/camilo1498/widget_screenshot_plus/blob/master/media_doc/list_scroll_ios.gif?raw=true" width="250" alt="list_scroll_ios">
+    <img src="https://github.com/camilo1498/widget_screenshot_plus/blob/master/media_doc/single_widget_ios.gif?raw=true" width="250" alt="single_widget_ios">
   </div>
 </div>
 
