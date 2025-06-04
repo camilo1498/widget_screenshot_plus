@@ -1,6 +1,6 @@
 name: widget_screenshot_plus
-description: 'A fork of widget_screenshot plugin. Flutter package for capturing widgets as high-quality images, including scrollable content. Perfect for sharing app content, creating previews, or saving widget states. Supports PNG/JPEG formats, background customization, and handles complex layouts with ease.'
-version: 0.0.4
+description: 'Capture Flutter widgets as images with scrollable content support. Export to PNG/JPEG with custom backgrounds. Perfect for sharing UI states or generating previews.'
+version: 0.0.5
 homepage: 'https://github.com/camilo1498/widget_screenshot_plus'
 
 environment:
