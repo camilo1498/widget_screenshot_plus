@@ -49,6 +49,11 @@ class WidgetShotPlusRenderRepaintBoundary extends RenderRepaintBoundary {
     ShotFormat format = ShotFormat.png,
     int quality = 100,
   }) async {
+    // Add validation
+    if (size.isEmpty) {
+      throw ArgumentError('RenderRepaintBoundary has empty size');
+    }
+
     pixelRatio ??= View.of(context).devicePixelRatio;
     quality = quality.clamp(0, 100);
 

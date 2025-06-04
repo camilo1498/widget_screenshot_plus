@@ -34,20 +34,19 @@ class MergeParam {
 
   /// Converts the MergeParam to a JSON map for platform channel communication.
   Map<String, dynamic> toJson() => {
-    if (color != null)
-      "color": [
-        (color!.a * 255.0).round(),
-        (color!.r * 255.0).round(),
-        (color!.g * 255.0).round(),
-        (color!.b * 255.0).round(),
-      ],
-
-    "width": size.width,
-    "height": size.height,
-    "format": format == ShotFormat.png ? 0 : 1,
-    "quality": quality,
-    "imageParams": imageParams.map((e) => e.toJson()).toList(),
-  };
+        if (color != null)
+          "color": [
+            (color!.alpha * 255.0).round(),
+            (color!.red * 255.0).round(),
+            (color!.green * 255.0).round(),
+            (color!.blue * 255.0).round(),
+          ],
+        "width": size.width,
+        "height": size.height,
+        "format": format == ShotFormat.png ? 0 : 1,
+        "quality": quality.clamp(0, 100),
+        "imageParams": imageParams.map((e) => e.toJson()).toList(),
+      };
 }
 
 /// Contains parameters for a single image to be merged.
@@ -70,19 +69,19 @@ class ImageParam {
   /// Creates an ImageParam for an image that should be placed at the start
   /// (top) of the composition.
   ImageParam.start(Uint8List image, Size size)
-    : this(image: image, offset: const Offset(-1, -1), size: size);
+      : this(image: image, offset: const Offset(-1, -1), size: size);
 
   /// Creates an ImageParam for an image that should be placed at the end
   /// (bottom) of the composition.
   ImageParam.end(Uint8List image, Size size)
-    : this(image: image, offset: const Offset(-2, -2), size: size);
+      : this(image: image, offset: const Offset(-2, -2), size: size);
 
   /// Converts the ImageParam to a JSON map for platform channel communication.
   Map<String, dynamic> toJson() => {
-    "image": image,
-    "dx": offset.dx,
-    "dy": offset.dy,
-    "width": size.width,
-    "height": size.height,
-  };
+        "image": image,
+        "dx": offset.dx,
+        "dy": offset.dy,
+        "width": size.width,
+        "height": size.height,
+      };
 }

@@ -12,7 +12,19 @@ class MethodChannelWidgetShotPlus extends WidgetShotPlusPlatform {
   final methodChannel = const MethodChannel('widget_shot');
 
   @override
-  Future<Uint8List?> mergeToMemory(MergeParam mergeParam) {
-    return methodChannel.invokeMethod<Uint8List>("merge", mergeParam.toJson());
+  Future<Uint8List?> mergeToMemory(MergeParam mergeParam) async {
+    try {
+      final params = mergeParam.toJson();
+
+      final result = await methodChannel.invokeMethod<Uint8List>(
+        "merge",
+        params,
+      );
+
+      return result;
+    } on PlatformException catch (e) {
+      debugPrint('PlatformException: ${e.code} - ${e.message}');
+      rethrow;
+    }
   }
 }
