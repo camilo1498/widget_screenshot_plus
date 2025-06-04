@@ -140,8 +140,6 @@ A: The package uses a platform interface with method channel implementation, ens
 ## Limitations
 
 - Very large captures may cause memory issues (consider splitting extremely long content)
-- Web support requires canvas-based rendering
-- Some platform-specific widgets may render differently in screenshots
 
 ## Contributing
 
