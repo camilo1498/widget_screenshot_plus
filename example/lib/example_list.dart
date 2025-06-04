@@ -13,73 +13,75 @@ class ExampleListPage extends StatefulWidget {
 }
 
 class _ExampleListPageState extends State<ExampleListPage> {
-  GlobalKey _shotKey = GlobalKey();
+  final GlobalKey _screenshotKey = GlobalKey();
+  final ScrollController _scrollController = ScrollController();
 
-  ScrollController _scrollController = ScrollController();
+  Future<void> _takeScreenshot() async {
+    try {
+      final boundary =
+          _screenshotKey.currentContext?.findRenderObject()
+              as WidgetShotPlusRenderRepaintBoundary?;
+
+      if (boundary == null) {
+        debugPrint("Render boundary not found.");
+        return;
+      }
+
+      final resultImage = await boundary.screenshot(
+        scrollController: _scrollController,
+        backgroundColor: Colors.white,
+        format: ShotFormat.png,
+        pixelRatio: 1,
+      );
+
+      if (resultImage == null) {
+        debugPrint("Failed to capture image.");
+        return;
+      }
+
+      // Save to gallery
+      final galleryResult = await ImageGallerySaverPlus.saveImage(resultImage);
+      debugPrint("Gallery save result: $galleryResult");
+
+      // Save to temp file
+      final dir = await getTemporaryDirectory();
+      final filePath = '${dir.path}/${DateTime.now()}.png';
+      final file = File(filePath)..writeAsBytesSync(resultImage);
+      debugPrint("Image saved to: $filePath");
+    } catch (error) {
+      debugPrint("Screenshot error: $error");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("截图"),
+        title: const Text("Screenshot Example"),
         actions: [
           TextButton(
-            onPressed: () async {
-              WidgetShotPlusRenderRepaintBoundary repaintBoundary =
-                  _shotKey.currentContext!.findRenderObject()
-                      as WidgetShotPlusRenderRepaintBoundary;
-              var resultImage = await repaintBoundary.screenshot(
-                scrollController: _scrollController,
-                backgroundColor: Colors.white,
-                format: ShotFormat.png,
-                pixelRatio: 1,
-              );
-
-              try {
-                Map<dynamic, dynamic> result =
-                    await ImageGallerySaverPlus.saveImage(resultImage!);
-
-                debugPrint("result = ${result}");
-
-                /// 存储的文件的路径
-                String path = (await getTemporaryDirectory()).path;
-                path += '/${DateTime.now().toString()}.png';
-                File file = File(path);
-                if (!file.existsSync()) {
-                  file.createSync();
-                }
-                await file.writeAsBytes(resultImage!);
-                debugPrint("result = ${file.path}");
-              } catch (error) {
-                /// flutter保存图片到App内存文件夹出错
-                debugPrint("error = ${error}");
-              }
-            },
+            onPressed: _takeScreenshot,
             child: const Text("Shot", style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
       body: WidgetShotPlus(
-        key: _shotKey,
+        key: _screenshotKey,
         child: ListView.separated(
           controller: _scrollController,
+          itemCount: 100,
           itemBuilder: (context, index) {
             return Container(
-              // color: Color.fromARGB(
-              //     Random().nextInt(255), Random().nextInt(255), Random().nextInt(255), Random().nextInt(255)),
               height: 160,
-              child: Center(
-                child: Text(
-                  "测试文案测试文案测试文案测试文案 ${index}",
-                  style: const TextStyle(fontSize: 32),
-                ),
+              alignment: Alignment.center,
+              child: Text(
+                "Example item $index",
+                style: const TextStyle(fontSize: 32),
               ),
             );
           },
-          separatorBuilder: (context, index) {
-            return const Divider(height: 1, color: Colors.grey);
-          },
-          itemCount: 100,
+          separatorBuilder: (context, index) =>
+              const Divider(height: 1, color: Colors.grey),
         ),
       ),
     );

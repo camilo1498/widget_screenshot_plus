@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:typed_data';
-import 'dart:ui';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -21,16 +20,10 @@ class WidgetShotPlus extends SingleChildRenderObjectWidget {
 }
 
 class WidgetShotPlusRenderRepaintBoundary extends RenderRepaintBoundary {
-  BuildContext context;
+  final BuildContext context;
 
   WidgetShotPlusRenderRepaintBoundary(this.context);
 
-  /// [scrollController] is child's scrollController, if child is [ScrollView]
-  /// The resultImage's [pixelRatio] default [View.of(context).devicePixelRatio]
-  /// some child has no background, [backgroundColor] to set backgroundColor default [Colors.white
-  /// set format by [format] support png or jpeg
-  /// set [quality] 0~100, if [format] is png, [quality] is useless
-  /// support merge [extraImage], like header, footer or watermark
   Future<Uint8List?> screenshot({
     ScrollController? scrollController,
     List<ImageParam> extraImage = const [],
@@ -40,156 +33,114 @@ class WidgetShotPlusRenderRepaintBoundary extends RenderRepaintBoundary {
     ShotFormat format = ShotFormat.png,
     int quality = 100,
   }) async {
-    pixelRatio ??= window.devicePixelRatio;
-    if (quality > 100) {
-      quality = 100;
+    pixelRatio ??= View.of(context).devicePixelRatio;
+    quality = quality.clamp(0, 100);
+
+    if (size.width <= 0 || size.height <= 0) {
+      debugPrint('Error: RenderRepaintBoundary size is invalid: $size');
+      return null;
     }
-    if (quality < 0) {
-      quality = 10;
-    }
-    Uint8List? resultImage;
 
     double sHeight =
         scrollController?.position.viewportDimension ?? size.height;
+    if (sHeight <= 0) sHeight = size.height;
 
     double imageHeight = 0;
+    final imageParams = <ImageParam>[];
 
-    List<ImageParam> imageParams = [];
+    // Add top extra images
+    for (final e in extraImage.where((e) => e.offset == const Offset(-1, -1))) {
+      imageParams.add(
+        ImageParam(
+          image: e.image,
+          offset: Offset(0, imageHeight),
+          size: e.size,
+        ),
+      );
+      imageHeight += e.size.height;
+    }
 
-    extraImage
-        .where((element) => element.offset == const Offset(-1, -1))
-        .toList(growable: false)
-        .forEach((element) {
-          imageParams.add(
-            ImageParam(
-              image: element.image,
-              offset: Offset(0, imageHeight),
-              size: element.size,
-            ),
-          );
-          imageHeight += element.size.height;
-        });
-
-    bool canScroll =
-        scrollController != null &&
-        (scrollController.position.maxScrollExtent) > 0;
+    final canScroll = scrollController?.position.maxScrollExtent != 0;
 
     if (canScroll) {
-      scrollController.jumpTo(0);
+      scrollController?.jumpTo(0);
       await Future.delayed(const Duration(milliseconds: 200));
     }
 
-    var firstImage = await _screenshot(pixelRatio);
-
+    // First visible image
+    final Uint8List firstImage = await _screenshot(pixelRatio);
     imageParams.add(
       ImageParam(
         image: firstImage,
         offset: Offset(0, imageHeight),
-        size: size * pixelRatio,
+        size: Size(size.width * pixelRatio, size.height * pixelRatio),
       ),
     );
-
     imageHeight += sHeight * pixelRatio;
 
     if (canScroll) {
-      assert(() {
-        scrollController.addListener(() {
-          debugPrint(
-            "WidgetShot scrollController.offser = ${scrollController.offset} , scrollController.position.maxScrollExtent = ${scrollController.position.maxScrollExtent}",
-          );
-        });
-        return true;
-      }());
-
       int i = 1;
+      while (imageHeight < maxHeight * pixelRatio &&
+          _canScroll(scrollController)) {
+        final nextScroll = sHeight * i;
+        final scrollExtent = scrollController!.position.maxScrollExtent;
 
-      while (true) {
-        if (imageHeight >= maxHeight * pixelRatio) {
+        if (scrollController.offset + sHeight / 10 > nextScroll) {
+          scrollController.jumpTo(nextScroll);
+          await Future.delayed(const Duration(milliseconds: 16));
+          final img = await _screenshot(pixelRatio);
+          imageParams.add(
+            ImageParam(
+              image: img,
+              offset: Offset(0, imageHeight),
+              size: Size(size.width * pixelRatio, size.height * pixelRatio),
+            ),
+          );
+          imageHeight += sHeight * pixelRatio;
+          i++;
+        } else if (nextScroll > scrollExtent) {
+          final remainingHeight = scrollExtent + sHeight - sHeight * i;
+          scrollController.jumpTo(scrollExtent);
+          await Future.delayed(const Duration(milliseconds: 16));
+          final img = await _screenshot(pixelRatio);
+          imageParams.add(
+            ImageParam(
+              image: img,
+              offset: Offset(
+                0,
+                imageHeight - ((size.height - remainingHeight) * pixelRatio),
+              ),
+              size: Size(size.width * pixelRatio, size.height * pixelRatio),
+            ),
+          );
+          imageHeight += remainingHeight * pixelRatio;
           break;
-        }
-        double lastImageHeight = 0;
-
-        if (_canScroll(scrollController)) {
-          double scrollHeight = scrollController.offset + sHeight / 10;
-
-          if (scrollHeight > sHeight * i) {
-            scrollController.jumpTo(sHeight * i);
-            await Future.delayed(const Duration(milliseconds: 16));
-            i++;
-
-            Uint8List image = await _screenshot(pixelRatio);
-
-            imageParams.add(
-              ImageParam(
-                image: image,
-                offset: Offset(0, imageHeight),
-                size: size * pixelRatio,
-              ),
-            );
-            imageHeight += sHeight * pixelRatio;
-          } else if (scrollHeight > scrollController.position.maxScrollExtent) {
-            lastImageHeight =
-                scrollController.position.maxScrollExtent +
-                sHeight -
-                sHeight * i;
-
-            scrollController.jumpTo(scrollController.position.maxScrollExtent);
-            await Future.delayed(const Duration(milliseconds: 16));
-
-            Uint8List lastImage = await _screenshot(pixelRatio);
-
-            imageParams.add(
-              ImageParam(
-                image: lastImage,
-                offset: Offset(
-                  0,
-                  imageHeight - ((size.height - lastImageHeight) * pixelRatio),
-                ),
-                size: size * pixelRatio,
-              ),
-            );
-
-            imageHeight += lastImageHeight * pixelRatio;
-          } else {
-            scrollController.jumpTo(scrollHeight);
-            await Future.delayed(const Duration(milliseconds: 16));
-          }
         } else {
-          break;
+          scrollController.jumpTo(scrollController.offset + sHeight / 10);
+          await Future.delayed(const Duration(milliseconds: 16));
         }
       }
     }
 
-    extraImage
-        .where((element) => element.offset == const Offset(-2, -2))
-        .toList(growable: false)
-        .forEach((element) {
-          imageParams.add(
-            ImageParam(
-              image: element.image,
-              offset: Offset(0, imageHeight),
-              size: element.size,
-            ),
-          );
-          imageHeight += element.size.height;
-        });
+    // Add bottom extra images
+    for (final e in extraImage.where((e) => e.offset == const Offset(-2, -2))) {
+      imageParams.add(
+        ImageParam(
+          image: e.image,
+          offset: Offset(0, imageHeight),
+          size: e.size,
+        ),
+      );
+      imageHeight += e.size.height;
+    }
 
-    extraImage
-        .where(
-          (element) =>
-              (element.offset != const Offset(-1, -1) &&
-              element.offset != const Offset(-2, -2)),
-        )
-        .toList(growable: false)
-        .forEach((element) {
-          imageParams.add(
-            ImageParam(
-              image: element.image,
-              offset: element.offset,
-              size: element.size,
-            ),
-          );
-        });
+    // Add manually positioned extra images
+    for (final e in extraImage.where(
+      (e) =>
+          e.offset != const Offset(-1, -1) && e.offset != const Offset(-2, -2),
+    )) {
+      imageParams.add(e);
+    }
 
     final mergeParam = MergeParam(
       color: backgroundColor,
@@ -199,64 +150,65 @@ class WidgetShotPlusRenderRepaintBoundary extends RenderRepaintBoundary {
       imageParams: imageParams,
     );
 
-    resultImage = await _merge(canScroll, mergeParam);
-
-    return resultImage;
+    return await _merge(canScroll, mergeParam);
   }
 
   Future<Uint8List?> _merge(bool canScroll, MergeParam mergeParam) async {
-    if (canScroll) {
-      return ImageMerger.merge(mergeParam);
-    } else {
-      Paint paint = Paint();
-      paint
-        ..isAntiAlias =
-            false // 是否抗锯齿
-        ..color = Colors.white; // 画笔颜色
-      PictureRecorder pictureRecorder = PictureRecorder();
-      Canvas canvas = Canvas(pictureRecorder);
-      if (mergeParam.color != null) {
-        canvas.drawColor(mergeParam.color!, BlendMode.color);
-        canvas.save();
-      }
+    if (canScroll) return ImageMerger.merge(mergeParam);
 
-      for (var element in mergeParam.imageParams) {
-        ui.Image img = await decodeImageFromList(element.image);
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
 
-        canvas.drawImage(img, element.offset, paint);
-      }
-
-      Picture picture = pictureRecorder.endRecording();
-
-      ui.Image rImage = await picture.toImage(
-        mergeParam.size.width.ceil(),
-        mergeParam.size.height.ceil(),
-      );
-      ByteData? byteData = await rImage.toByteData(
-        format: ui.ImageByteFormat.png,
-      );
-      return byteData!.buffer.asUint8List();
+    if (mergeParam.color != null) {
+      canvas.drawColor(mergeParam.color!, BlendMode.color);
+      canvas.save();
     }
+
+    final paint = Paint()..isAntiAlias = false;
+
+    for (final imgParam in mergeParam.imageParams) {
+      final img = await decodeImageFromList(imgParam.image);
+      canvas.drawImage(img, imgParam.offset, paint);
+    }
+
+    final picture = recorder.endRecording();
+    if (mergeParam.size.width <= 0 || mergeParam.size.height <= 0) {
+      debugPrint(
+        'Error: mergeParam size invalid in _merge: ${mergeParam.size}',
+      );
+      return null;
+    }
+
+    final renderedImage = await picture.toImage(
+      mergeParam.size.width.ceil(),
+      mergeParam.size.height.ceil(),
+    );
+
+    final byteData = await renderedImage.toByteData(
+      format: ui.ImageByteFormat.png,
+    );
+    return byteData?.buffer.asUint8List();
   }
 
-  bool _canScroll(ScrollController? scrollController) {
-    if (scrollController == null) {
-      return false;
-    }
-    double maxScrollExtent = scrollController.position.maxScrollExtent;
-    double offset = scrollController.offset;
+  bool _canScroll(ScrollController? controller) {
+    if (controller == null) return false;
+    final position = controller.position;
     return !nearEqual(
-      maxScrollExtent,
-      offset,
-      scrollController.position.physics.tolerance.distance,
+      position.maxScrollExtent,
+      position.pixels,
+      position.physics.tolerance.distance,
     );
   }
 
   Future<Uint8List> _screenshot(double pixelRatio) async {
-    ui.Image image = await toImage(pixelRatio: pixelRatio);
-
-    ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-    Uint8List uint8list = byteData!.buffer.asUint8List();
-    return Future.value(uint8list);
+    if (size.width <= 0 || size.height <= 0) {
+      throw Exception('RenderRepaintBoundary size is invalid: $size');
+    }
+    final img = await toImage(pixelRatio: pixelRatio);
+    final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
+    if (byteData == null) {
+      throw Exception('Failed to convert image to byte data');
+    }
+    return byteData.buffer.asUint8List();
   }
 }

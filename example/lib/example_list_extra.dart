@@ -1,12 +1,8 @@
 import 'dart:io';
-import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:widget_screenshot_plus/widget_screenshot_plus.dart';
@@ -18,217 +14,190 @@ class ExampleListExtraPage extends StatefulWidget {
   State<ExampleListExtraPage> createState() => _ExampleListExtraPageState();
 }
 
-class _ExampleListExtraPageState extends State<ExampleListExtraPage>
-    with SingleTickerProviderStateMixin {
-  GlobalKey _shotHeaderKey = GlobalKey();
+class _ExampleListExtraPageState extends State<ExampleListExtraPage> {
+  final _headerKey1 = GlobalKey();
+  final _headerKey2 = GlobalKey();
+  final _bodyKey = GlobalKey();
+  final _footerKey = GlobalKey();
+  final _scrollController = ScrollController();
 
-  GlobalKey _shotHeaderKey2 = GlobalKey();
+  Future<Uint8List?> _captureSection(GlobalKey key) async {
+    final boundary =
+        key.currentContext?.findRenderObject()
+            as WidgetShotPlusRenderRepaintBoundary?;
+    if (boundary == null || boundary.size.isEmpty) {
+      debugPrint('Boundary missing or empty for key: $key');
+      return null;
+    }
+    return boundary.screenshot(format: ShotFormat.png, quality: 100);
+  }
 
-  GlobalKey _shotKey = GlobalKey();
-  GlobalKey _shotFooterKey = GlobalKey();
+  Future<void> _takeScreenshot() async {
+    try {
+      final dpr = MediaQuery.of(context).devicePixelRatio;
 
-  ScrollController _scrollController = ScrollController();
+      final headerImage1 = await _captureSection(_headerKey1);
+      final headerImage2 = await _captureSection(_headerKey2);
+      final footerImage = await _captureSection(_footerKey);
+
+      final bodyBoundary =
+          _bodyKey.currentContext?.findRenderObject()
+              as WidgetShotPlusRenderRepaintBoundary?;
+      if (bodyBoundary == null || bodyBoundary.size.isEmpty) {
+        debugPrint("Body boundary missing or empty.");
+        return;
+      }
+
+      ImageParam? _makeImageParam(Uint8List? img, GlobalKey key, bool isStart) {
+        if (img == null) return null;
+        final size = key.currentContext?.size;
+        if (size == null) return null;
+        return isStart
+            ? ImageParam.start(img, size * dpr)
+            : ImageParam.end(img, size * dpr);
+      }
+
+      final extraImages = [
+        _makeImageParam(headerImage1, _headerKey1, true),
+        _makeImageParam(headerImage2, _headerKey2, true),
+        _makeImageParam(footerImage, _footerKey, false),
+      ].whereType<ImageParam>().toList();
+
+      final resultImage = await bodyBoundary.screenshot(
+        scrollController: _scrollController,
+        extraImage: extraImages,
+        backgroundColor: Colors.white,
+        format: ShotFormat.png,
+        quality: 100,
+      );
+
+      if (resultImage == null) {
+        debugPrint("Screenshot failed.");
+        return;
+      }
+
+      final file = await File(
+        '${(await getTemporaryDirectory()).path}/${DateTime.now().millisecondsSinceEpoch}.png',
+      ).writeAsBytes(resultImage);
+
+      debugPrint("Saved image to: ${file.path}");
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Image saved successfully!\nPath: ${file.path}"),
+        ),
+      );
+
+      await SharePlus.instance.share(ShareParams(files: [XFile(file.path)]));
+    } catch (e, s) {
+      debugPrint("Error capturing screenshot: $e\n$s");
+    }
+  }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("截图"),
-        actions: [
-          TextButton(
-            onPressed: () async {
-              WidgetShotPlusRenderRepaintBoundary headerBoundary =
-                  _shotHeaderKey.currentContext!.findRenderObject()
-                      as WidgetShotPlusRenderRepaintBoundary;
-              var headerImage = await headerBoundary.screenshot(
-                format: ShotFormat.png,
-                quality: 100,
-              );
-
-              WidgetShotPlusRenderRepaintBoundary headerBoundary2 =
-                  _shotHeaderKey2.currentContext!.findRenderObject()
-                      as WidgetShotPlusRenderRepaintBoundary;
-              var headerImage2 = await headerBoundary2.screenshot(
-                format: ShotFormat.png,
-              );
-
-              WidgetShotPlusRenderRepaintBoundary footerBoundary =
-                  _shotFooterKey.currentContext!.findRenderObject()
-                      as WidgetShotPlusRenderRepaintBoundary;
-              var footerImage = await footerBoundary.screenshot(
-                format: ShotFormat.png,
-              );
-
-              WidgetShotPlusRenderRepaintBoundary repaintBoundary =
-                  _shotKey.currentContext!.findRenderObject()
-                      as WidgetShotPlusRenderRepaintBoundary;
-              var resultImage = await repaintBoundary.screenshot(
-                scrollController: _scrollController,
-                extraImage: [
-                  if (headerImage != null)
-                    ImageParam.start(
-                      headerImage,
-                      _shotHeaderKey.currentContext!.size! *
-                          window.devicePixelRatio,
-                    ),
-                  if (headerImage2 != null)
-                    ImageParam.start(
-                      headerImage2,
-                      _shotHeaderKey2.currentContext!.size! *
-                          window.devicePixelRatio,
-                    ),
-                  if (footerImage != null)
-                    ImageParam.end(
-                      footerImage,
-                      _shotFooterKey.currentContext!.size! *
-                          window.devicePixelRatio,
-                    ),
-                ],
-                format: ShotFormat.png,
-                backgroundColor: Colors.black,
-              );
-
-              try {
-                /// 存储的文件的路径
-                String path = (await getTemporaryDirectory()).path;
-                path += '/${DateTime.now().toString()}.png';
-                File file = File(path);
-                if (!file.existsSync()) {
-                  file.createSync();
-                }
-                await file.writeAsBytes(resultImage!);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("save success!\npath = ${file.path}")),
-                );
-                debugPrint("result = ${file.path}");
-
-                final params = ShareParams(
-                  text: 'Great picture',
-                  files: [XFile(file.path)],
-                );
-
-                await SharePlus.instance.share(params);
-              } catch (error) {
-                debugPrint("error = ${error}");
-              }
-            },
-            child: const Text("Shot", style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          WidgetShotPlus(
-            key: _shotHeaderKey,
-            child: Container(
-              color: Colors.white,
-              width: double.infinity,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text("TestHeader"),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text("TestHeader"),
-                  ),
-                ],
-              ),
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(
+      title: const Text("Screenshot Example"),
+      actions: [
+        TextButton(
+          onPressed: _takeScreenshot,
+          child: const Text("Shot", style: TextStyle(color: Colors.white)),
+        ),
+      ],
+    ),
+    body: Column(
+      children: [
+        WidgetShotPlus(
+          key: _headerKey1,
+          child: Container(
+            color: Colors.white,
+            width: double.infinity,
+            padding: const EdgeInsets.all(8),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("Header Section 1"),
+                SizedBox(height: 4),
+                Text("Another header line"),
+              ],
             ),
           ),
-          WidgetShotPlus(
-            key: _shotHeaderKey2,
-            child: Container(
-              padding: const EdgeInsets.all(8.0),
-              width: double.infinity,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Text("TestHeader2", style: TextStyle(color: Colors.white)),
-                ],
-              ),
+        ),
+        WidgetShotPlus(
+          key: _headerKey2,
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            width: double.infinity,
+            color: Colors.blue,
+            child: const Text(
+              "Header Section 2",
+              style: TextStyle(color: Colors.white),
             ),
           ),
-          Expanded(
-            child: WidgetShotPlus(
-              key: _shotKey,
-
-              child: ListView.separated(
-                controller: _scrollController,
-                itemBuilder: (context, index) {
-                  return Container(
-                    padding: const EdgeInsets.only(
-                      top: 12,
-                      right: 12,
-                      bottom: 12,
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const FlutterLogo(size: 100),
-                        Expanded(
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(4),
-                              shape: BoxShape.rectangle,
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Colors.white,
-                                  offset: Offset(0, 0),
-                                  blurRadius: 14,
-                                  spreadRadius: 0,
-                                ),
-                              ],
+        ),
+        Expanded(
+          child: WidgetShotPlus(
+            key: _bodyKey,
+            child: ListView.separated(
+              controller: _scrollController,
+              itemCount: 5,
+              separatorBuilder: (_, __) =>
+                  const Divider(height: 1, color: Colors.grey),
+              itemBuilder: (context, index) => Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 12,
+                  horizontal: 12,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const FlutterLogo(size: 100),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(4),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black12,
+                              offset: Offset(0, 2),
+                              blurRadius: 8,
                             ),
-                            child: const Text(
-                              "The Container widget lets you create a rectangular visual element. A container can be decorated with a BoxDecoration, such as a background, a border, or a shadow. A Container can also have margins, padding, and constraints applied to its size.",
-                            ),
-                          ),
+                          ],
                         ),
-                      ],
+                        child: const Text(
+                          "The Container widget lets you create a rectangular visual element. "
+                          "A container can be decorated with a BoxDecoration, such as a background, a border, or a shadow. "
+                          "It can also have margins, padding, and constraints applied to its size.",
+                        ),
+                      ),
                     ),
-                  );
-                },
-                separatorBuilder: (context, index) {
-                  return const Divider(height: 1, color: Colors.grey);
-                },
-                itemCount: 5,
+                  ],
+                ),
               ),
             ),
           ),
-          WidgetShotPlus(
-            key: _shotFooterKey,
-            child: Container(
-              color: Colors.white,
-              width: double.infinity,
-              child: Builder(
-                builder: (context) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: Text("TestFooter"),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: Text("TestFooter"),
-                      ),
-                    ],
-                  );
-                },
-              ),
+        ),
+        WidgetShotPlus(
+          key: _footerKey,
+          child: Container(
+            color: Colors.white,
+            width: double.infinity,
+            padding: const EdgeInsets.all(8),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("Footer Section 1"),
+                SizedBox(height: 4),
+                Text("Another footer line"),
+              ],
             ),
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
 }

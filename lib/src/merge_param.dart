@@ -18,18 +18,21 @@ class MergeParam {
     required this.imageParams,
   });
 
-  Map<String, dynamic> toJson() {
-    var map = <String, dynamic>{};
-    if (color != null) {
-      map["color"] = [color!.alpha, color!.red, color!.green, color!.blue];
-    }
-    map["width"] = size.width;
-    map["height"] = size.height;
-    map["format"] = format == ShotFormat.png ? 0 : 1;
-    map["quality"] = quality;
-    map["imageParams"] = imageParams.map((e) => e.toJson()).toList();
-    return map;
-  }
+  Map<String, dynamic> toJson() => {
+    if (color != null)
+      "color": [
+        (color!.a * 255.0).round(),
+        (color!.r * 255.0).round(),
+        (color!.g * 255.0).round(),
+        (color!.b * 255.0).round(),
+      ],
+
+    "width": size.width,
+    "height": size.height,
+    "format": format == ShotFormat.png ? 0 : 1,
+    "quality": quality,
+    "imageParams": imageParams.map((e) => e.toJson()).toList(),
+  };
 }
 
 class ImageParam {
@@ -45,13 +48,11 @@ class ImageParam {
   ImageParam.end(Uint8List image, Size size)
     : this(image: image, offset: const Offset(-2, -2), size: size);
 
-  Map<String, dynamic> toJson() {
-    var map = <String, dynamic>{};
-    map["image"] = image;
-    map["dx"] = offset.dx;
-    map["dy"] = offset.dy;
-    map["width"] = size.width;
-    map["height"] = size.height;
-    return map;
-  }
+  Map<String, dynamic> toJson() => {
+    "image": image,
+    "dx": offset.dx,
+    "dy": offset.dy,
+    "width": size.width,
+    "height": size.height,
+  };
 }

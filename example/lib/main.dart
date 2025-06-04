@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:widget_screenshot_plus_example/example_list_extra.dart';
 
 import 'example_list.dart';
+import 'example_list_extra.dart';
 import 'example_scrollview_extra.dart';
 import 'example_single.dart';
 
@@ -12,78 +12,45 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Widget Screenshot Plus Demo',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: const MyHomePage(),
+      home: const HomePage(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key}) : super(key: key);
+class HomePage extends StatelessWidget {
+  const HomePage({Key? key}) : super(key: key);
 
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
+  void _navigateTo(BuildContext context, Widget page) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
+  }
 
-class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Example")),
+      appBar: AppBar(title: const Text("Example Screenshots")),
       body: ListView(
         children: [
           ListTile(
-            title: const Text("Single Example"),
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) {
-                    return const ExampleSinglePage();
-                  },
-                ),
-              );
-            },
+            title: const Text("Single Widget Example"),
+            onTap: () => _navigateTo(context, const ExampleSinglePage()),
           ),
           ListTile(
-            title: const Text("List Example"),
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) {
-                    return const ExampleListPage();
-                  },
-                ),
-              );
-            },
+            title: const Text("ListView Example"),
+            onTap: () => _navigateTo(context, const ExampleListPage()),
           ),
           ListTile(
-            title: const Text("List Extra Example"),
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) {
-                    return const ExampleListExtraPage();
-                  },
-                ),
-              );
-            },
+            title: const Text("ListView + Header/Footer Example"),
+            onTap: () => _navigateTo(context, const ExampleListExtraPage()),
           ),
           ListTile(
-            title: const Text("ScrollView Example"),
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) {
-                    return const ExampleScrollViewExtraPage();
-                  },
-                ),
-              );
-            },
+            title: const Text("ScrollView + Header/Footer Example"),
+            onTap: () =>
+                _navigateTo(context, const ExampleScrollViewExtraPage()),
           ),
         ],
       ),

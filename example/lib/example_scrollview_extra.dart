@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
@@ -15,78 +15,69 @@ class ExampleScrollViewExtraPage extends StatefulWidget {
 
 class _ExampleScrollViewExtraPageState
     extends State<ExampleScrollViewExtraPage> {
-  GlobalKey _shotHeaderKey = GlobalKey();
-  GlobalKey _shotKey = GlobalKey();
-  GlobalKey _shotFooterKey = GlobalKey();
+  final _headerKey = GlobalKey();
+  final _bodyKey = GlobalKey();
+  final _footerKey = GlobalKey();
+  final _scrollController = ScrollController();
 
-  ScrollController _scrollController = ScrollController();
+  Future<Uint8List?> _captureSection(GlobalKey key) async {
+    final boundary =
+        key.currentContext?.findRenderObject()
+            as WidgetShotPlusRenderRepaintBoundary?;
+    return await boundary?.screenshot(format: ShotFormat.png, pixelRatio: 1);
+  }
+
+  Future<void> _takeScreenshot() async {
+    try {
+      final headerImage = await _captureSection(_headerKey);
+      final footerImage = await _captureSection(_footerKey);
+
+      final bodyBoundary =
+          _bodyKey.currentContext?.findRenderObject()
+              as WidgetShotPlusRenderRepaintBoundary?;
+
+      if (bodyBoundary == null) {
+        debugPrint("Body render boundary not found.");
+        return;
+      }
+
+      final resultImage = await bodyBoundary.screenshot(
+        scrollController: _scrollController,
+        extraImage: [
+          if (headerImage != null)
+            ImageParam.start(headerImage, _headerKey.currentContext!.size!),
+          if (footerImage != null)
+            ImageParam.end(footerImage, _footerKey.currentContext!.size!),
+        ],
+        backgroundColor: Colors.white,
+        format: ShotFormat.png,
+        pixelRatio: 1,
+      );
+
+      if (resultImage == null) {
+        debugPrint("Failed to capture screenshot.");
+        return;
+      }
+
+      final directory = await getTemporaryDirectory();
+      final filePath = '${directory.path}/${DateTime.now()}.png';
+      final file = File(filePath);
+      await file.writeAsBytes(resultImage);
+
+      debugPrint("Screenshot saved to: $filePath");
+    } catch (error) {
+      debugPrint("Screenshot error: $error");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("截图"),
+        title: const Text("Screenshot Example"),
         actions: [
           TextButton(
-            onPressed: () async {
-              WidgetShotPlusRenderRepaintBoundary headerBoundary =
-                  _shotHeaderKey.currentContext!.findRenderObject()
-                      as WidgetShotPlusRenderRepaintBoundary;
-              var headerImage = await headerBoundary.screenshot(
-                format: ShotFormat.png,
-                pixelRatio: 1,
-              );
-
-              WidgetShotPlusRenderRepaintBoundary footerBoundary =
-                  _shotFooterKey.currentContext!.findRenderObject()
-                      as WidgetShotPlusRenderRepaintBoundary;
-              var footerImage = await footerBoundary.screenshot(
-                format: ShotFormat.png,
-                pixelRatio: 1,
-              );
-
-              WidgetShotPlusRenderRepaintBoundary repaintBoundary =
-                  _shotKey.currentContext!.findRenderObject()
-                      as WidgetShotPlusRenderRepaintBoundary;
-              var resultImage = await repaintBoundary.screenshot(
-                scrollController: _scrollController,
-                extraImage: [
-                  if (headerImage != null)
-                    ImageParam.start(
-                      headerImage,
-                      _shotHeaderKey.currentContext!.size!,
-                    ),
-                  if (footerImage != null)
-                    ImageParam.end(
-                      footerImage,
-                      _shotFooterKey.currentContext!.size!,
-                    ),
-                ],
-                backgroundColor: Colors.white,
-                format: ShotFormat.png,
-                pixelRatio: 1,
-              );
-
-              try {
-                // Map<dynamic, dynamic> result =
-                //     await ImageGallerySaver.saveImage(resultImage!);
-                //
-                // debugPrint("result = ${result}");
-
-                /// 存储的文件的路径
-                String path = (await getTemporaryDirectory()).path;
-                path += '/${DateTime.now().toString()}.png';
-                File file = File(path);
-                if (!file.existsSync()) {
-                  file.createSync();
-                }
-                await file.writeAsBytes(resultImage!);
-                debugPrint("result = ${file.path}");
-              } catch (error) {
-                /// flutter保存图片到App内存文件夹出错
-                debugPrint("error = ${error}");
-              }
-            },
+            onPressed: _takeScreenshot,
             child: const Text("Shot", style: TextStyle(color: Colors.white)),
           ),
         ],
@@ -94,79 +85,54 @@ class _ExampleScrollViewExtraPageState
       body: Column(
         children: [
           WidgetShotPlus(
-            key: _shotHeaderKey,
+            key: _headerKey,
             child: Container(
               width: double.infinity,
-              child: Column(
+              padding: const EdgeInsets.all(8),
+              child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: const [
-                  Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text("TestHeader"),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text("TestHeader"),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text("TestHeader"),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text("TestHeader"),
-                  ),
+                children: [
+                  Text("Header Line 1"),
+                  Text("Header Line 2"),
+                  Text("Header Line 3"),
+                  Text("Header Line 4"),
                 ],
               ),
             ),
           ),
           Expanded(
             child: WidgetShotPlus(
-              key: _shotKey,
+              key: _bodyKey,
               child: SingleChildScrollView(
                 controller: _scrollController,
                 child: Column(
-                  children: [
-                    for (int i = 0; i < 100; i++)
-                      SizedBox(
-                        height: 160,
-                        child: Center(
-                          child: Text(
-                            "测试文案测试文案测试文案测试文案 ${i}",
-                            style: TextStyle(fontSize: 32),
-                          ),
+                  children: List.generate(100, (i) {
+                    return SizedBox(
+                      height: 160,
+                      child: Center(
+                        child: Text(
+                          "Sample content line $i",
+                          style: const TextStyle(fontSize: 32),
                         ),
                       ),
-                  ],
+                    );
+                  }),
                 ),
               ),
             ),
           ),
           WidgetShotPlus(
-            key: _shotFooterKey,
+            key: _footerKey,
             child: Container(
               width: double.infinity,
-              child: Column(
+              padding: const EdgeInsets.all(8),
+              child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: const [
-                  Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text("TestFooter"),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text("TestFooter"),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text("TestFooter"),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text("TestFooter"),
-                  ),
+                children: [
+                  Text("Footer Line 1"),
+                  Text("Footer Line 2"),
+                  Text("Footer Line 3"),
+                  Text("Footer Line 4"),
                 ],
               ),
             ),
