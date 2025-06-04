@@ -36,15 +36,15 @@ class MergeParam {
   Map<String, dynamic> toJson() => {
         if (color != null)
           "color": [
-            (color!.alpha * 255.0).round(),
-            (color!.red * 255.0).round(),
-            (color!.green * 255.0).round(),
-            (color!.blue * 255.0).round(),
+            color!.alpha.toDouble(),
+            color!.red.toDouble(),
+            color!.green.toDouble(),
+            color!.blue.toDouble(),
           ],
         "width": size.width,
         "height": size.height,
         "format": format == ShotFormat.png ? 0 : 1,
-        "quality": quality.clamp(0, 100),
+        "quality": quality,
         "imageParams": imageParams.map((e) => e.toJson()).toList(),
       };
 }

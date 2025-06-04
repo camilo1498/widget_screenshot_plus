@@ -15,12 +15,11 @@ class MethodChannelWidgetShotPlus extends WidgetShotPlusPlatform {
   Future<Uint8List?> mergeToMemory(MergeParam mergeParam) async {
     try {
       final params = mergeParam.toJson();
+      debugPrint(
+          'PARAMS SENT TO NATIVE: ${params.toString()}'); // Add this line
 
-      final result = await methodChannel.invokeMethod<Uint8List>(
-        "merge",
-        params,
-      );
-
+      final result =
+          await methodChannel.invokeMethod<Uint8List>("merge", params);
       return result;
     } on PlatformException catch (e) {
       debugPrint('PlatformException: ${e.code} - ${e.message}');
