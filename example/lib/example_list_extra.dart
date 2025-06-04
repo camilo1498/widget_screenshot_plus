@@ -5,8 +5,14 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:widget_screenshot_plus/widget_screenshot_plus.dart';
 
+/// Demonstrates capturing a screenshot of a scrollable list with headers/footers.
+///
+/// Shows how to:
+/// 1. Capture long scrollable content
+/// 2. Handle Sliver widgets in screenshots
+/// 3. Use a scroll controller for multi-part capture
 class ExampleListExtraPage extends StatefulWidget {
-  const ExampleListExtraPage({Key? key}) : super(key: key);
+  const ExampleListExtraPage({super.key});
 
   @override
   State<ExampleListExtraPage> createState() => _ExampleListExtraPageState();
@@ -16,26 +22,34 @@ class _ExampleListExtraPageState extends State<ExampleListExtraPage> {
   final _shotKey = GlobalKey();
   final _scrollController = ScrollController();
 
+  /// Captures the entire scrollable content as a single image
   Future<void> _takeScreenshot() async {
     try {
+      // Find the render boundary
       final boundary =
           _shotKey.currentContext?.findRenderObject()
               as WidgetShotPlusRenderRepaintBoundary?;
 
+      // Capture screenshot with scroll handling
       final resultImage = await boundary?.screenshot(
-        scrollController: _scrollController,
-        backgroundColor: Colors.white,
-        format: ShotFormat.png,
         quality: 100,
+        format: ShotFormat.png,
+        backgroundColor: Colors.white,
+        scrollController: _scrollController, // Handle scrolling content
       );
 
       if (resultImage != null) {
-        final dir = await getTemporaryDirectory();
-        final file = await File(
-          '${dir.path}/${DateTime.now().millisecondsSinceEpoch}.png',
-        ).writeAsBytes(resultImage);
+        // Save to temporary file
+        final dir = await getApplicationDocumentsDirectory();
+        final imagePath = await File(
+          '${dir.path}/${DateTime.now()}.png',
+        ).create();
+        await imagePath.writeAsBytes(resultImage);
 
-        await SharePlus.instance.share(ShareParams(files: [XFile(file.path)]));
+        // Share the image
+        await SharePlus.instance.share(
+          ShareParams(files: [XFile(imagePath.path)]),
+        );
       }
     } catch (e, s) {
       debugPrint("Error capturing screenshot: $e\n$s");
@@ -59,6 +73,7 @@ class _ExampleListExtraPageState extends State<ExampleListExtraPage> {
         child: CustomScrollView(
           controller: _scrollController,
           slivers: [
+            // Header section 1
             SliverToBoxAdapter(
               child: Container(
                 color: Colors.white,
@@ -74,6 +89,7 @@ class _ExampleListExtraPageState extends State<ExampleListExtraPage> {
                 ),
               ),
             ),
+            // Header section 2
             SliverToBoxAdapter(
               child: Container(
                 padding: const EdgeInsets.all(8),
@@ -85,6 +101,7 @@ class _ExampleListExtraPageState extends State<ExampleListExtraPage> {
                 ),
               ),
             ),
+            // Main scrollable content
             SliverList(
               delegate: SliverChildBuilderDelegate(
                 (context, index) => Padding(
@@ -124,6 +141,7 @@ class _ExampleListExtraPageState extends State<ExampleListExtraPage> {
                 childCount: 5,
               ),
             ),
+            // Footer section
             SliverToBoxAdapter(
               child: Container(
                 color: Colors.white,

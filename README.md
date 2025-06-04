@@ -1,15 +1,139 @@
-# widget_screenshot_plus
+# Widget Screenshot Plus - Flutter Package
 
-A fork of widget_screenshot plugin, updated for flutter 3.32.0
+![Pub Version](https://img.shields.io/pub/v/widget_screenshot_plus)
+![License](https://img.shields.io/badge/license-MIT-blue)
 
-## Getting Started
+A powerful Flutter package for capturing widgets as images, including scrollable content and complex layouts. Perfect for sharing app content, creating previews, or saving widget states.
 
-This project is a starting point for a Flutter
-[plug-in package](https://flutter.dev/to/develop-plugins),
-a specialized package that includes platform-specific implementation code for
-Android and/or iOS.
+## Features
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- 📸 Capture any widget as an image
+- 🖼️ Handle scrollable content (ListView, CustomScrollView, etc.)
+- 🎨 Customize output format (PNG/JPEG) and quality
+- 🖌️ Add background colors to screenshots
+- 📱 Support for high DPI screens with pixel ratio control
+- 🧩 Merge multiple images into one composition
 
+## Android Example
+[Image](media_doc/list_scroll_android.gif)
+[Image](media_doc/single_widget_android.gif)
+
+## IOS Example
+[Image](media_doc/list_scroll_ios.gif)
+[Image](media_doc/single_widget_ios.gif)
+
+## Installation
+
+Add to your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  widget_screenshot_plus: ^latest_version
+```
+
+## Basic Usage
+
+### 1. Wrap your widget
+
+```dart
+WidgetShotPlus(
+  key: _screenshotKey,
+  child: YourWidget(),
+)
+```
+
+### 2. Capture the screenshot
+
+```dart
+final boundary = _screenshotKey.currentContext?.findRenderObject()
+        as WidgetShotPlusRenderRepaintBoundary?;
+
+final imageBytes = await boundary?.screenshot(
+  format: ShotFormat.png,
+  quality: 100,
+);
+```
+
+## Examples
+
+### Simple Widget Capture
+
+```dart
+// Wrap your widget
+WidgetShotPlus(
+  key: _screenshotKey,
+  child: Container(
+    color: Colors.blue,
+    child: Text('Capture me!'),
+  ),
+)
+
+// Capture it
+final imageBytes = await boundary.screenshot();
+```
+
+### Scrollable Content
+
+```dart
+// Use with scroll controller
+final _scrollController = ScrollController();
+
+WidgetShotPlus(
+  key: _screenshotKey,
+  child: ListView(
+    controller: _scrollController,
+    children: [...],
+  ),
+)
+
+// Capture entire scrollable content
+final imageBytes = await boundary.screenshot(
+  scrollController: _scrollController,
+);
+```
+
+### Save and Share
+
+```dart
+// Save to file
+final dir = await getApplicationDocumentsDirectory();
+final imageFile = File('${dir.path}/screenshot.png');
+await imageFile.writeAsBytes(imageBytes!);
+
+// Share using share_plus
+await Share.shareXFiles([XFile(imageFile.path)]);
+```
+
+## Advanced Options
+
+| Parameter         | Description                          | Default       |
+|-------------------|--------------------------------------|---------------|
+| `format`          | Output format (PNG/JPEG)             | `ShotFormat.png` |
+| `quality`         | Image quality (0-100)                | `100`         |
+| `pixelRatio`      | Device pixel ratio                   | Device default|
+| `backgroundColor` | Background color for the screenshot  | `null` (transparent) |
+| `scrollController`| For capturing scrollable content     | `null`        |
+| `maxHeight`       | Maximum height for scroll capture    | `10000`       |
+
+## FAQ
+
+**Q: Can I capture widgets that are not currently visible on screen?**  
+A: Yes! The package can capture the entire widget tree regardless of visibility.
+
+**Q: How does it handle platform differences?**  
+A: The package uses a platform interface with method channel implementation, ensuring consistent behavior across iOS and Android.
+
+
+## Limitations
+
+- Very large captures may cause memory issues (consider splitting extremely long content)
+- Web support requires canvas-based rendering
+- Some platform-specific widgets may render differently in screenshots
+
+## Contributing
+
+Contributions are welcome! Please open issues or pull requests for any bugs or feature suggestions.
+
+## License
+
+MIT - See [LICENSE](LICENSE) for details.

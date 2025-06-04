@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 
-import 'example_list.dart';
 import 'example_list_extra.dart';
-import 'example_scrollview_extra.dart';
 import 'example_single.dart';
 
 void main() {
   runApp(const MyApp());
 }
 
+/// Main application widget that demonstrates Widget Screenshot Plus functionality.
+///
+/// Provides navigation to different examples showing various screenshot capabilities.
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -22,9 +23,11 @@ class MyApp extends StatelessWidget {
   }
 }
 
+/// Homepage that lists available screenshot examples.
 class HomePage extends StatelessWidget {
-  const HomePage({Key? key}) : super(key: key);
+  const HomePage({super.key});
 
+  /// Navigates to the specified example page
   void _navigateTo(BuildContext context, Widget page) {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
   }
@@ -40,17 +43,8 @@ class HomePage extends StatelessWidget {
             onTap: () => _navigateTo(context, const ExampleSinglePage()),
           ),
           ListTile(
-            title: const Text("ListView Example"),
-            onTap: () => _navigateTo(context, const ExampleListPage()),
-          ),
-          ListTile(
             title: const Text("ListView + Header/Footer Example"),
             onTap: () => _navigateTo(context, const ExampleListExtraPage()),
-          ),
-          ListTile(
-            title: const Text("ScrollView + Header/Footer Example"),
-            onTap: () =>
-                _navigateTo(context, const ExampleScrollViewExtraPage()),
           ),
         ],
       ),

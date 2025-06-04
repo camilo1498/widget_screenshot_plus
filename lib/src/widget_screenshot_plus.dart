@@ -9,8 +9,12 @@ import 'package:flutter/rendering.dart';
 import 'image_merger.dart';
 import 'merge_param.dart';
 
+/// Supported image formats for screenshot output.
 enum ShotFormat { png, jpeg }
 
+/// A widget that enables screenshot functionality of its child.
+///
+/// Wraps its child in a RenderRepaintBoundary to capture its visual appearance.
 class WidgetShotPlus extends SingleChildRenderObjectWidget {
   const WidgetShotPlus({super.key, super.child});
 
@@ -19,11 +23,23 @@ class WidgetShotPlus extends SingleChildRenderObjectWidget {
       WidgetShotPlusRenderRepaintBoundary(context);
 }
 
+/// The render object that handles the actual screenshot capture functionality.
 class WidgetShotPlusRenderRepaintBoundary extends RenderRepaintBoundary {
   final BuildContext context;
 
   WidgetShotPlusRenderRepaintBoundary(this.context);
 
+  /// Captures a screenshot of the widget and any additional images.
+  ///
+  /// [scrollController] Used for capturing scrollable content (captures multiple screenshots)
+  /// [extraImage] Additional images to include in the screenshot
+  /// [maxHeight] Maximum height of the final image
+  /// [pixelRatio] Device pixel ratio (defaults to screen's pixel ratio)
+  /// [backgroundColor] Background color for the final image
+  /// [format] Output image format (PNG or JPEG)
+  /// [quality] Output quality (0-100) for JPEG format
+  ///
+  /// Returns the screenshot as bytes or null if capture fails.
   Future<Uint8List?> screenshot({
     ScrollController? scrollController,
     List<ImageParam> extraImage = const [],
@@ -153,6 +169,7 @@ class WidgetShotPlusRenderRepaintBoundary extends RenderRepaintBoundary {
     return await _merge(canScroll, mergeParam);
   }
 
+  /// Merges multiple images either using platform-specific implementation or Flutter's canvas.
   Future<Uint8List?> _merge(bool canScroll, MergeParam mergeParam) async {
     if (canScroll) return ImageMerger.merge(mergeParam);
 
@@ -190,16 +207,15 @@ class WidgetShotPlusRenderRepaintBoundary extends RenderRepaintBoundary {
     return byteData?.buffer.asUint8List();
   }
 
+  /// Checks if the scrollable content can still be scrolled.
   bool _canScroll(ScrollController? controller) {
     if (controller == null) return false;
     final position = controller.position;
-    return !nearEqual(
-      position.maxScrollExtent,
-      position.pixels,
-      position.physics.tolerance.distance,
-    );
+    final tolerance = position.physics.toleranceFor(position).distance;
+    return !nearEqual(position.maxScrollExtent, position.pixels, tolerance);
   }
 
+  /// Captures a screenshot of the current render boundary.
   Future<Uint8List> _screenshot(double pixelRatio) async {
     if (size.width <= 0 || size.height <= 0) {
       throw Exception('RenderRepaintBoundary size is invalid: $size');
