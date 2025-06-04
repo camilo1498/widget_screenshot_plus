@@ -3,7 +3,12 @@
 ![Pub Version](https://img.shields.io/pub/v/widget_screenshot_plus)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
-A powerful Flutter package for capturing widgets as images, including scrollable content and complex layouts. Perfect for sharing app content, creating previews, or saving widget states.
+This package is a Fork of [widget_screenshot](https://pub.dev/packages/widget_screenshot)
+updated to the lasted version of flutter and dart.
+
+A Flutter package for capturing widgets as images, 
+including scrollable content and complex layouts. Perfect for sharing app content, creating previews, 
+or saving widget states.
 
 ## Features
 
@@ -15,12 +20,12 @@ A powerful Flutter package for capturing widgets as images, including scrollable
 - 🧩 Merge multiple images into one composition
 
 ## Android Example
-![Image](media_doc/list_scroll_android.gif)
-![Image](media_doc/single_widget_android.gif)
+<img src="media_doc/list_scroll_android.gif" width="200">
+<img src="media_doc/single_widget_android.gif" width="200">
 
 ## IOS Example
-![Image](media_doc/list_scroll_ios.gif)
-![Image](media_doc/single_widget_ios.gif)
+<img src="media_doc/list_scroll_ios.gif" width="200"> 
+<img src="media_doc/single_widget_ios.gif" width="200">
 
 ## Installation
 
