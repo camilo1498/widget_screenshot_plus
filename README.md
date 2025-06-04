@@ -15,12 +15,12 @@ A powerful Flutter package for capturing widgets as images, including scrollable
 - 🧩 Merge multiple images into one composition
 
 ## Android Example
-[Image](media_doc/list_scroll_android.gif)
-[Image](media_doc/single_widget_android.gif)
+![Image](media_doc/list_scroll_android.gif)
+![Image](media_doc/single_widget_android.gif)
 
 ## IOS Example
-[Image](media_doc/list_scroll_ios.gif)
-[Image](media_doc/single_widget_ios.gif)
+![Image](media_doc/list_scroll_ios.gif)
+![Image](media_doc/single_widget_ios.gif)
 
 ## Installation
 
