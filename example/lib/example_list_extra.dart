@@ -26,9 +26,8 @@ class _ExampleListExtraPageState extends State<ExampleListExtraPage> {
   Future<void> _takeScreenshot() async {
     try {
       // Find the render boundary
-      final boundary =
-          _shotKey.currentContext?.findRenderObject()
-              as WidgetShotPlusRenderRepaintBoundary?;
+      final boundary = _shotKey.currentContext?.findRenderObject()
+          as WidgetShotPlusRenderRepaintBoundary?;
 
       // Capture screenshot with scroll handling
       final resultImage = await boundary?.screenshot(
@@ -103,43 +102,148 @@ class _ExampleListExtraPageState extends State<ExampleListExtraPage> {
             ),
             // Main scrollable content
             SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => Padding(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 12,
-                    horizontal: 12,
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const FlutterLogo(size: 100),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(4),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Colors.black12,
-                                offset: Offset(0, 2),
-                                blurRadius: 8,
-                              ),
-                            ],
-                          ),
-                          child: const Text(
-                            "The Container widget lets you create a rectangular visual element. "
-                            "A container can be decorated with a BoxDecoration, such as a background, a border, or a shadow. "
-                            "It can also have margins, padding, and constraints applied to its size.",
-                          ),
+              delegate: SliverChildListDelegate([
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const FlutterLogo(size: 100),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(4),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black12,
+                              offset: Offset(0, 2),
+                              blurRadius: 8,
+                            ),
+                          ],
+                        ),
+                        child: const Text(
+                          "The Container widget lets you create a rectangular visual element. "
+                          "A container can be decorated with a BoxDecoration, such as a background, a border, or a shadow. "
+                          "It can also have margins, padding, and constraints applied to its size.",
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                childCount: 5,
-              ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const FlutterLogo(size: 100),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(4),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black12,
+                              offset: Offset(0, 2),
+                              blurRadius: 8,
+                            ),
+                          ],
+                        ),
+                        child: const Text(
+                          "The Container widget lets you create a rectangular visual element. "
+                          "A container can be decorated with a BoxDecoration, such as a background, a border, or a shadow. "
+                          "It can also have margins, padding, and constraints applied to its size.",
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const FlutterLogo(size: 100),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(4),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black12,
+                              offset: Offset(0, 2),
+                              blurRadius: 8,
+                            ),
+                          ],
+                        ),
+                        child: const Text(
+                          "The Container widget lets you create a rectangular visual element. "
+                          "A container can be decorated with a BoxDecoration, such as a background, a border, or a shadow. "
+                          "It can also have margins, padding, and constraints applied to its size.",
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const FlutterLogo(size: 100),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(4),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black12,
+                              offset: Offset(0, 2),
+                              blurRadius: 8,
+                            ),
+                          ],
+                        ),
+                        child: const Text(
+                          "The Container widget lets you create a rectangular visual element. "
+                          "A container can be decorated with a BoxDecoration, such as a background, a border, or a shadow. "
+                          "It can also have margins, padding, and constraints applied to its size.",
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const FlutterLogo(size: 100),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(4),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black12,
+                              offset: Offset(0, 2),
+                              blurRadius: 8,
+                            ),
+                          ],
+                        ),
+                        child: const Text(
+                          "The Container widget lets you create a rectangular visual element. "
+                          "A container can be decorated with a BoxDecoration, such as a background, a border, or a shadow. "
+                          "It can also have margins, padding, and constraints applied to its size.",
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ]),
             ),
             // Footer section
             SliverToBoxAdapter(
