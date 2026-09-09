@@ -4,7 +4,7 @@
 #
 Pod::Spec.new do |s|
   s.name             = 'widget_screenshot_plus'
-  s.version          = '0.0.8'
+  s.version          = '0.0.9'
   s.summary          = 'Capture Flutter widgets as images with scrollable content support.'
   s.description      = <<-DESC
 Capture Flutter widgets as images, including scrollable content and complex layouts.

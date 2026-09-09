@@ -1,3 +1,9 @@
+## 0.0.9
+
+* Re-version of the modern line: `0.0.8` was published from the `3.27.x`
+  support branch, so the modern stack (Flutter >=3.44.0, Built-in Kotlin,
+  AGP 9) continues here. No code changes versus the `0.0.8` development line.
+
 ## 0.0.8
 
 * Updates the minimum supported SDK version to Flutter 3.44/Dart 3.12.
