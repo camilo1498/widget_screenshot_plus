@@ -1,9 +1,11 @@
+import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:widget_screenshot_plus/widget_screenshot_plus.dart';
 
 /// Smoke tests that exercise the real plugin pipeline on device, including
@@ -135,5 +137,44 @@ void main() {
     // than the 400px viewport (times pixel ratio).
     expect(image.height, greaterThan(400));
     image.dispose();
+  });
+
+  testWidgets('capture can be saved to a file for sharing', (tester) async {
+    final key = GlobalKey();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: WidgetShotPlus(
+            key: key,
+            child: Container(
+              width: 200,
+              height: 120,
+              color: Colors.green,
+              alignment: Alignment.center,
+              child: const Text('Share me!'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final boundary = key.currentContext!.findRenderObject()
+        as WidgetShotPlusRenderRepaintBoundary;
+    final bytes = await boundary.screenshot();
+    expect(bytes, isNotNull);
+
+    // Same save flow the example app uses before invoking share_plus.
+    final dir = await getApplicationDocumentsDirectory();
+    final file = await File(
+      '${dir.path}/widget_screenshot_plus_smoke.png',
+    ).create();
+    await file.writeAsBytes(bytes!);
+
+    expect(await file.exists(), isTrue);
+    expect(await file.length(), greaterThan(0));
+    // NOTE: presenting the share sheet itself (share_plus) requires a
+    // manual tap; the bytes-to-file handoff verified here is everything
+    // the plugin side owns.
   });
 }
