@@ -1,7 +1,9 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:widget_screenshot_plus/src/widget_screenshot_plus.dart';
+
+/// Supported image formats for screenshot output.
+enum ShotFormat { png, jpeg }
 
 /// Contains parameters required for merging multiple images into one.
 ///
@@ -33,13 +35,17 @@ class MergeParam {
   });
 
   /// Converts the MergeParam to a JSON map for platform channel communication.
+  ///
+  /// Color components are sent as 0-255 ints in [alpha, red, green, blue]
+  /// order, matching the native parsers on Android ([Merger]) and iOS
+  /// ([MergeParam]). Width/height are doubles.
   Map<String, dynamic> toJson() => {
         if (color != null)
           "color": [
-            color!.alpha.toDouble(),
-            color!.red.toDouble(),
-            color!.green.toDouble(),
-            color!.blue.toDouble(),
+            ((color!.a * 255.0).round().clamp(0, 255)),
+            ((color!.r * 255.0).round().clamp(0, 255)),
+            ((color!.g * 255.0).round().clamp(0, 255)),
+            ((color!.b * 255.0).round().clamp(0, 255)),
           ],
         "width": size.width,
         "height": size.height,

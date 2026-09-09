@@ -25,9 +25,21 @@ class WidgetScreenshotPlusPlugin: FlutterPlugin, MethodCallHandler {
 
   override fun onMethodCall(call: MethodCall, result: Result) {
     if (call.method == "merge") {
-      val arguments = call.arguments as Map<String, Any>
-      val merger = Merger(arguments)
-      result.success(merger.merge())
+      val arguments = call.arguments as? Map<String, Any>
+      if (arguments == null) {
+        result.error("invalid_args", "Arguments must be a dictionary", null)
+        return
+      }
+      try {
+        val merger = Merger(arguments)
+        result.success(merger.merge())
+      } catch (e: IllegalArgumentException) {
+        result.error("invalid_args", e.message, null)
+      } catch (e: OutOfMemoryError) {
+        result.error("merge_failed", "Out of memory while merging images", null)
+      } catch (e: Exception) {
+        result.error("merge_failed", e.message, null)
+      }
     } else {
       result.notImplemented()
     }

@@ -1,21 +1,28 @@
 name: widget_screenshot_plus
 description: 'Capture Flutter widgets as images with scrollable content support. Export to PNG/JPEG with custom backgrounds. Perfect for sharing UI states or generating previews.'
-version: 0.0.7
+version: 0.0.8
 homepage: 'https://github.com/camilo1498/widget_screenshot_plus'
+repository: 'https://github.com/camilo1498/widget_screenshot_plus'
+issue_tracker: 'https://github.com/camilo1498/widget_screenshot_plus/issues'
+topics:
+  - screenshot
+  - widget
+  - image
+  - share
 
 environment:
-  sdk: '>=3.0.0 <4.0.0'
-  flutter: '>=3.22.0'
+  sdk: ^3.12.0
+  flutter: ">=3.44.0"
 
 dependencies:
   flutter:
     sdk: flutter
-  plugin_platform_interface: ^2.0.2
+  plugin_platform_interface: ^2.1.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
 
 flutter:
   plugin:

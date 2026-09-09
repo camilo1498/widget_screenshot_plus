@@ -3,20 +3,19 @@ description: "Demonstrates how to use the widget_screenshot_plus plugin."
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
 environment:
-  sdk: '>=3.0.0 <4.0.0'
-  flutter: '>=3.22.0'
+  sdk: ^3.12.0
+  flutter: ">=3.44.0"
 
 dependencies:
   flutter:
     sdk: flutter
-  path_provider: ^2.1.5
-  image_gallery_saver_plus: ^4.0.1
-  share_plus: ^11.0.0
+  path_provider: ^2.1.6
+  share_plus: ^13.3.0
 
   widget_screenshot_plus:
     path: ../
 
-  cupertino_icons: ^1.0.8
+  cupertino_icons: ^1.0.9
 
 dev_dependencies:
   integration_test:
@@ -24,7 +23,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true

@@ -9,8 +9,7 @@ import 'package:flutter/rendering.dart';
 import 'image_merger.dart';
 import 'merge_param.dart';
 
-/// Supported image formats for screenshot output.
-enum ShotFormat { png, jpeg }
+export 'merge_param.dart' show ShotFormat;
 
 /// A widget that enables screenshot functionality of its child.
 ///
@@ -21,11 +20,19 @@ class WidgetShotPlus extends SingleChildRenderObjectWidget {
   @override
   RenderObject createRenderObject(BuildContext context) =>
       WidgetShotPlusRenderRepaintBoundary(context);
+
+  @override
+  void updateRenderObject(
+    BuildContext context,
+    WidgetShotPlusRenderRepaintBoundary renderObject,
+  ) {
+    renderObject.context = context;
+  }
 }
 
 /// The render object that handles the actual screenshot capture functionality.
 class WidgetShotPlusRenderRepaintBoundary extends RenderRepaintBoundary {
-  final BuildContext context;
+  BuildContext context;
 
   WidgetShotPlusRenderRepaintBoundary(this.context);
 
@@ -49,22 +56,22 @@ class WidgetShotPlusRenderRepaintBoundary extends RenderRepaintBoundary {
     ShotFormat format = ShotFormat.png,
     int quality = 100,
   }) async {
-    // Add validation
-    if (size.isEmpty) {
-      throw ArgumentError('RenderRepaintBoundary has empty size');
-    }
-
-    pixelRatio ??= View.of(context).devicePixelRatio;
-    quality = quality.clamp(0, 100);
-
-    if (size.width <= 0 || size.height <= 0) {
+    if (size.isEmpty || size.width <= 0 || size.height <= 0) {
       debugPrint('Error: RenderRepaintBoundary size is invalid: $size');
       return null;
     }
 
-    double sHeight =
-        scrollController?.position.viewportDimension ?? size.height;
-    if (sHeight <= 0) sHeight = size.height;
+    final double effectivePixelRatio =
+        pixelRatio ?? View.of(context).devicePixelRatio;
+    final int effectiveQuality = quality.clamp(0, 100);
+
+    double sHeight = size.height;
+    if (scrollController != null &&
+        scrollController.hasClients &&
+        scrollController.position.hasViewportDimension) {
+      final double viewport = scrollController.position.viewportDimension;
+      if (viewport > 0) sHeight = viewport;
+    }
 
     double imageHeight = 0;
     final imageParams = <ImageParam>[];
@@ -81,66 +88,74 @@ class WidgetShotPlusRenderRepaintBoundary extends RenderRepaintBoundary {
       imageHeight += e.size.height;
     }
 
-    final canScroll = scrollController?.position.maxScrollExtent != 0;
+    final bool canScroll = scrollController != null &&
+        scrollController.hasClients &&
+        scrollController.position.maxScrollExtent > 0;
 
     if (canScroll) {
-      scrollController?.jumpTo(0);
+      scrollController.jumpTo(0);
       await Future.delayed(const Duration(milliseconds: 200));
     }
 
     // First visible image
-    final Uint8List firstImage = await _screenshot(pixelRatio);
+    final Uint8List firstImage = await _screenshot(effectivePixelRatio);
     imageParams.add(
       ImageParam(
         image: firstImage,
         offset: Offset(0, imageHeight),
-        size: Size(size.width * pixelRatio, size.height * pixelRatio),
+        size: Size(size.width * effectivePixelRatio,
+            size.height * effectivePixelRatio),
       ),
     );
-    imageHeight += sHeight * pixelRatio;
+    imageHeight += sHeight * effectivePixelRatio;
 
     if (canScroll) {
       int i = 1;
-      while (imageHeight < maxHeight * pixelRatio &&
+      while (imageHeight < maxHeight * effectivePixelRatio &&
           _canScroll(scrollController)) {
         final nextScroll = sHeight * i;
-        final scrollExtent = scrollController!.position.maxScrollExtent;
+        final scrollExtent = scrollController.position.maxScrollExtent;
 
         if (scrollController.offset + sHeight / 10 > nextScroll) {
           scrollController.jumpTo(nextScroll);
           await Future.delayed(const Duration(milliseconds: 16));
-          final img = await _screenshot(pixelRatio);
+          final img = await _screenshot(effectivePixelRatio);
           imageParams.add(
             ImageParam(
               image: img,
               offset: Offset(0, imageHeight),
-              size: Size(size.width * pixelRatio, size.height * pixelRatio),
+              size: Size(size.width * effectivePixelRatio,
+                  size.height * effectivePixelRatio),
             ),
           );
-          imageHeight += sHeight * pixelRatio;
+          imageHeight += sHeight * effectivePixelRatio;
           i++;
         } else if (nextScroll > scrollExtent) {
           final remainingHeight = scrollExtent + sHeight - sHeight * i;
           scrollController.jumpTo(scrollExtent);
           await Future.delayed(const Duration(milliseconds: 16));
-          final img = await _screenshot(pixelRatio);
+          final img = await _screenshot(effectivePixelRatio);
           imageParams.add(
             ImageParam(
               image: img,
               offset: Offset(
                 0,
-                imageHeight - ((size.height - remainingHeight) * pixelRatio),
+                imageHeight -
+                    ((size.height - remainingHeight) * effectivePixelRatio),
               ),
-              size: Size(size.width * pixelRatio, size.height * pixelRatio),
+              size: Size(size.width * effectivePixelRatio,
+                  size.height * effectivePixelRatio),
             ),
           );
-          imageHeight += remainingHeight * pixelRatio;
+          imageHeight += remainingHeight * effectivePixelRatio;
           break;
         } else {
           scrollController.jumpTo(scrollController.offset + sHeight / 10);
           await Future.delayed(const Duration(milliseconds: 16));
         }
       }
+      // Restore scroll position after stitching.
+      if (scrollController.hasClients) scrollController.jumpTo(0);
     }
 
     // Add bottom extra images
@@ -165,35 +180,22 @@ class WidgetShotPlusRenderRepaintBoundary extends RenderRepaintBoundary {
 
     final mergeParam = MergeParam(
       color: backgroundColor,
-      size: Size(size.width * pixelRatio, imageHeight),
+      size: Size(size.width * effectivePixelRatio, imageHeight),
       format: format,
-      quality: quality,
+      quality: effectiveQuality,
       imageParams: imageParams,
     );
 
-    return await _merge(canScroll, mergeParam);
+    return _merge(mergeParam);
   }
 
-  /// Merges multiple images either using platform-specific implementation or Flutter's canvas.
-  Future<Uint8List?> _merge(bool canScroll, MergeParam mergeParam) async {
-    if (canScroll) return ImageMerger.merge(mergeParam);
-
-    final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder);
-
-    if (mergeParam.color != null) {
-      canvas.drawColor(mergeParam.color!, BlendMode.color);
-      canvas.save();
-    }
-
-    final paint = Paint()..isAntiAlias = false;
-
-    for (final imgParam in mergeParam.imageParams) {
-      final img = await decodeImageFromList(imgParam.image);
-      canvas.drawImage(img, imgParam.offset, paint);
-    }
-
-    final picture = recorder.endRecording();
+  /// Merges multiple images, honoring [MergeParam.format] and
+  /// [MergeParam.quality].
+  ///
+  /// Prefers the native merger (supports PNG and JPEG) and falls back to a
+  /// Flutter canvas render (PNG only) when the platform implementation is
+  /// unavailable, e.g. on desktop/web where no native merger exists.
+  Future<Uint8List?> _merge(MergeParam mergeParam) async {
     if (mergeParam.size.width <= 0 || mergeParam.size.height <= 0) {
       debugPrint(
         'Error: mergeParam size invalid in _merge: ${mergeParam.size}',
@@ -201,21 +203,57 @@ class WidgetShotPlusRenderRepaintBoundary extends RenderRepaintBoundary {
       return null;
     }
 
-    final renderedImage = await picture.toImage(
-      mergeParam.size.width.ceil(),
-      mergeParam.size.height.ceil(),
-    );
+    try {
+      final Uint8List? native = await ImageMerger.merge(mergeParam);
+      if (native != null) return native;
+    } catch (e) {
+      debugPrint('Native merge failed, falling back to canvas: $e');
+    }
 
-    final byteData = await renderedImage.toByteData(
-      format: ui.ImageByteFormat.png,
-    );
-    return byteData?.buffer.asUint8List();
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+
+    if (mergeParam.color != null) {
+      canvas.drawColor(mergeParam.color!, BlendMode.srcOver);
+    }
+
+    final paint = Paint()..isAntiAlias = false;
+
+    for (final imgParam in mergeParam.imageParams) {
+      final img = await decodeImageFromList(imgParam.image);
+      try {
+        canvas.drawImage(img, imgParam.offset, paint);
+      } finally {
+        img.dispose();
+      }
+    }
+
+    final picture = recorder.endRecording();
+    try {
+      final renderedImage = await picture.toImage(
+        mergeParam.size.width.ceil(),
+        mergeParam.size.height.ceil(),
+      );
+      try {
+        // NOTE: Flutter canvas can only encode PNG here; JPEG requests are
+        // served by the native merger above.
+        final byteData = await renderedImage.toByteData(
+          format: ui.ImageByteFormat.png,
+        );
+        return byteData?.buffer.asUint8List();
+      } finally {
+        renderedImage.dispose();
+      }
+    } finally {
+      picture.dispose();
+    }
   }
 
   /// Checks if the scrollable content can still be scrolled.
   bool _canScroll(ScrollController? controller) {
-    if (controller == null) return false;
+    if (controller == null || !controller.hasClients) return false;
     final position = controller.position;
+    if (!position.hasContentDimensions || !position.hasPixels) return false;
     final tolerance = position.physics.toleranceFor(position).distance;
     return !nearEqual(position.maxScrollExtent, position.pixels, tolerance);
   }
@@ -226,10 +264,14 @@ class WidgetShotPlusRenderRepaintBoundary extends RenderRepaintBoundary {
       throw Exception('RenderRepaintBoundary size is invalid: $size');
     }
     final img = await toImage(pixelRatio: pixelRatio);
-    final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
-    if (byteData == null) {
-      throw Exception('Failed to convert image to byte data');
+    try {
+      final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
+      if (byteData == null) {
+        throw Exception('Failed to convert image to byte data');
+      }
+      return byteData.buffer.asUint8List();
+    } finally {
+      img.dispose();
     }
-    return byteData.buffer.asUint8List();
   }
 }

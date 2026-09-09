@@ -11,11 +11,17 @@ struct MergeParam {
     let imageParams: [ImageParam]
 
     init?(from dict: [String: Any]) {
-        // Handle both Int and Double from Dart
-        guard let width = (dict["width"] as? NSNumber)?.doubleValue,
-              let height = (dict["height"] as? NSNumber)?.doubleValue,
-              let format = dict["format"] as? Int,
-              let quality = dict["quality"] as? Int,
+        // Handle numbers arriving as Int, Double, or NSNumber from Dart.
+        func doubleValue(_ value: Any?) -> Double? {
+            (value as? NSNumber)?.doubleValue
+        }
+        func intValue(_ value: Any?) -> Int? {
+            (value as? NSNumber)?.intValue
+        }
+        guard let width = doubleValue(dict["width"]),
+              let height = doubleValue(dict["height"]),
+              let format = intValue(dict["format"]),
+              let quality = intValue(dict["quality"]),
               let images = dict["imageParams"] as? [[String: Any]] else {
             return nil
         }
@@ -54,15 +60,18 @@ struct ImageParam {
     let height: CGFloat
 
     init?(from dict: [String: Any]) {
-        guard let image = dict["image"] as? FlutterStandardTypedData,
-              let dx = (dict["dx"] as? NSNumber)?.doubleValue,
-              let dy = (dict["dy"] as? NSNumber)?.doubleValue,
-              let width = (dict["width"] as? NSNumber)?.doubleValue,
-              let height = (dict["height"] as? NSNumber)?.doubleValue else {
+        func doubleValue(_ value: Any?) -> Double? {
+            (value as? NSNumber)?.doubleValue
+        }
+        guard let typedImage = dict["image"] as? FlutterStandardTypedData,
+              let dx = doubleValue(dict["dx"]),
+              let dy = doubleValue(dict["dy"]),
+              let width = doubleValue(dict["width"]),
+              let height = doubleValue(dict["height"]) else {
             return nil
         }
 
-        self.image = image.data
+        self.image = typedImage.data
         self.dx = CGFloat(dx)
         self.dy = CGFloat(dy)
         self.width = CGFloat(width)

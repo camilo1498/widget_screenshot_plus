@@ -22,6 +22,12 @@ class _ExampleListExtraPageState extends State<ExampleListExtraPage> {
   final _shotKey = GlobalKey();
   final _scrollController = ScrollController();
 
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   /// Captures the entire scrollable content as a single image
   Future<void> _takeScreenshot() async {
     try {

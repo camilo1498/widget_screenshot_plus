@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
     name: "widget_screenshot_plus",
     platforms: [
-        .iOS("12.0")
+        .iOS("13.0")
     ],
     products: [
         .library(name: "widget-screenshot-plus", targets: ["widget_screenshot_plus"])
