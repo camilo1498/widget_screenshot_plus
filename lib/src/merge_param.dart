@@ -39,20 +39,26 @@ class MergeParam {
   /// Color components are sent as 0-255 ints in [alpha, red, green, blue]
   /// order, matching the native parsers on Android ([Merger]) and iOS
   /// ([MergeParam]). Width/height are doubles.
-  Map<String, dynamic> toJson() => {
-        if (color != null)
-          "color": [
-            ((color!.a * 255.0).round().clamp(0, 255)),
-            ((color!.r * 255.0).round().clamp(0, 255)),
-            ((color!.g * 255.0).round().clamp(0, 255)),
-            ((color!.b * 255.0).round().clamp(0, 255)),
-          ],
-        "width": size.width,
-        "height": size.height,
-        "format": format == ShotFormat.png ? 0 : 1,
-        "quality": quality,
-        "imageParams": imageParams.map((e) => e.toJson()).toList(),
-      };
+  ///
+  /// Components are extracted with bit shifts from [Color.toARGB32] so this
+  /// works on every supported Flutter version without deprecation warnings.
+  Map<String, dynamic> toJson() {
+    final color = this.color;
+    return {
+      if (color != null)
+        "color": [
+          ((color.toARGB32() >> 24) & 0xFF),
+          ((color.toARGB32() >> 16) & 0xFF),
+          ((color.toARGB32() >> 8) & 0xFF),
+          (color.toARGB32() & 0xFF),
+        ],
+      "width": size.width,
+      "height": size.height,
+      "format": format == ShotFormat.png ? 0 : 1,
+      "quality": quality,
+      "imageParams": imageParams.map((e) => e.toJson()).toList(),
+    };
+  }
 }
 
 /// Contains parameters for a single image to be merged.

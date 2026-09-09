@@ -143,19 +143,18 @@ A: The package uses a platform interface with method channel implementation, ens
 
 ## Compatibility
 
-| Plugin version | Flutter | Dart     | Notes |
-|----------------|---------|----------|-------|
-| `>=0.0.8`      | `>=3.44.0` | `^3.12.0` | Current. Built-in Kotlin, AGP 9, modern `Color` API. Validated on Flutter 3.47.2 (Android + iOS). |
-| `<=0.0.7`      | `>=3.22.0` | `>=3.0.0` | Legacy stack (AGP 8, `kotlin-android` plugin). Works on Flutter 3.27.x with deprecation warnings. |
+| Plugin version | Flutter | Dart | Notes |
+|----------------|---------|------|-------|
+| `>=0.0.8` | `>=3.27.0` | `>=3.6.0` | Current. Single codebase for old and new Flutter. Validated on Flutter 3.47.2 (Android + iOS). |
+| `<=0.0.7` | `>=3.22.0` | `>=3.0.0` | Legacy, kept for reference. |
 
-> **Flutter 3.27.x is NOT supported by `>=0.0.8`.** Breaking changes that prevent it:
->
-> - `pubspec.yaml` requires Dart `^3.12.0` / Flutter `>=3.44.0`, so `flutter pub get` fails version resolution on 3.27.x (Dart 3.6).
-> - Android requires AGP 9.1.0, Kotlin 2.4.0, Java 17 and Built-in Kotlin (`kotlin.compilerOptions`, no `kotlin-android` apply). Flutter 3.27 tooling predates AGP 9 support (added in 3.44), so the Gradle build fails.
-> - iOS deployment target is 13.0, above the iOS 12 baseline of the 3.27 era.
-> - The example app requires Gradle 9.3.1 and `share_plus` 13.x.
->
-> If your app is pinned to Flutter 3.27.x, stay on plugin `0.0.7` and upgrade to `>=0.0.8` together with Flutter `>=3.44.0`.
+How the wide range is achieved:
+
+- Dart uses only version-stable APIs (`Color.toARGB32` bit shifts instead of version-specific component getters).
+- Android stays on the legacy stack (AGP 8.11.1, Kotlin 2.2.20, Java 11, `kotlin-android` plugin) pinned exactly at Flutter 3.47's hard minimums, so Flutter 3.27-era tooling (which only warns about newer versions instead of rejecting them) still builds it. On Flutter 3.44+ you will see "support will soon be dropped" warnings — the build still succeeds. When those minimums are raised again, it will ship as a new plugin version.
+- iOS deployment target is 12.0, matching the 3.27-era baseline.
+
+> Recommended: verify on the oldest supported SDK with `fvm` (e.g. `fvm use 3.27.4 && fvm flutter build apk --debug`) before publishing, as CI here validates on the latest stable.
 
 ## Contributing
 
